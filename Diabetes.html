@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Don't Have Diabetes!</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --primary-color: #2b6cb0;
+            --success-color: #2f855a;
+            --warning-color: #dd6b20;
+            --danger-color: #c53030;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .phone-container {
+            width: 100%;
+            max-width: 410px;
+            height: 780px;
+            background: #fff;
+            border-radius: 30px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+            border: 8px solid #222;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            padding: 24px;
+            justify-content: space-between;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Welcome Screen Styling */
+        #welcome-screen {
+            justify-content: center;
+            text-align: center;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: var(--danger-color);
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            border: 2px solid #cbd5e0;
+            border-radius: 12px;
+            outline: none;
+            text-align: center;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* Top HUD Dashboard */
+        .hud {
+            background: #edf2f7;
+            padding: 12px 16px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #718096;
+            margin-bottom: 2px;
+        }
+
+        .stat-val {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        /* Gameplay elements */
+        .game-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 20px;
+            width: 100%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .card-emoji {
+            font-size: 55px;
+            margin-bottom: 15px;
+        }
+
+        .card-text {
+            font-size: 18px;
+            line-height: 1.5;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        /* Buttons styles */
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: #fff; }
+        .btn-option { background-color: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; text-align: left; padding-left: 20px; }
+        .btn-option:hover { background-color: #e2e8f0; }
+        .btn-check { background-color: #4a5568; color: #fff; font-size: 14px; padding: 10px; border-radius: 10px; margin-top: 10px;}
+
+        /* Modal Overlay for Blood Sugar Check */
+        .modal {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 24px;
+            padding: 24px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .report-box {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .report-num {
+            font-size: 24px;
+            font-weight: 800;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone-container">
+
+    <!-- SCREEN 1: WELCOME/LOGIN -->
+    <div id="welcome-screen" class="screen active">
+        <div>
+            <h1>"I Don't Have Diabetes!"</h1>
+            <p class="subtitle">A simple game about making everyday choices and seeing how your body responds.</p>
+        </div>
+        <div>
+            <input type="text" id="player-name" placeholder="Enter Your Name" autocomplete="off">
+        </div>
+        <div class="btn-container">
+            <button class="btn-primary" onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: GAMEPLAY -->
+    <div id="game-screen" class="screen">
+        <!-- HUD Stats Bar -->
+        <div class="hud">
+            <div class="stat-item">
+                <div class="stat-label">Day</div>
+                <div id="hud-day" class="stat-val">1</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">How You Feel</div>
+                <div id="hud-energy" class="stat-val" style="color: var(--success-color);">Great</div>
+            </div>
+        </div>
+
+        <!-- Main Prompt Card -->
+        <div class="game-body">
+            <div class="card">
+                <div id="card-emoji" class="card-emoji">🥞</div>
+                <div id="card-text" class="card-text">Loading scenario...</div>
+            </div>
+            <button class="btn-check" onclick="toggleMedicalReport(true)">📊 Check My Blood Sugar Meter</button>
+        </div>
+
+        <!-- Choice Action Area -->
+        <div id="choices-container" class="btn-container">
+            <!-- Buttons dynamically generated here -->
+        </div>
+    </div>
+
+    <!-- HEALTH STATUS METER MODAL -->
+    <div id="health-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="font-size: 20px; color: #2d3748;">📋 Your Health Report</h2>
+            <p style="font-size: 14px; color: #718096; margin-top: 4px;" id="report-greeting">Hi</p>
+            
+            <div class="report-grid">
+                <div class="report-box">
+                    <div class="stat-label">Blood Sugar</div>
+                    <div id="report-bs" class="report-num">120</div>
+                    <div style="font-size: 11px; margin-top:4px;" id="report-bs-label">Normal</div>
+                </div>
+                <div class="report-box">
+                    <div class="stat-label">Est. A1C Test</div>
+                    <div id="report-a1c" class="report-num">6.5%</div>
+                    <div style="font-size: 11px; margin-top:4px;" id="report-a1c-label">Good</div>
+                </div>
+            </div>
+
+            <p id="report-advice" style="font-size: 14px; line-height: 1.4; color: #4a5568; margin-bottom: 20px; min-height: 44px;"></p>
+            <button class="btn-primary" onclick="toggleMedicalReport(false)">Back to the Day</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Game Core State
+    let state = {
+        name: "Player",
+        bloodSugar: 135,
+        a1c: 7.2,
+        energy: 100,
+        day: 1,
+        currentDeckIndex: 0
+    };
+
+    // Card Deck Library
+    // Dynamic tags: [NAME] will be swapped out automatically
+    const cardDeck = [
+        {
+            emoji: "💊",
+            text: "Good morning [NAME]! The alarm goes off and it is time to face the day. Your doctor left a prescription bottle on the nightstand for your morning dose.",
+            choices: [
+                { text: "Take the medication with a full glass of water.", bs: -30, energy: 10, next: 1 },
+                { text: "Skip the pills. 'I feel fine, I don't need these.'", bs: 50, energy: -5, next: 1 }
+            ]
+        },
+        {
+            emoji: "🍳",
+            text: "Time for breakfast! What are we cooking up in the kitchen today?",
+            choices: [
+                { text: "Scramble up two eggs with a slice of whole wheat toast.", bs: -10, energy: 15, next: 2 },
+                { text: "Pour a big bowl of sugary cereal and sweet tea.", bs: 75, energy: 20, next: 2 }
+            ]
+        },
+        {
+            emoji: "👟",
+            text: "It's a beautiful afternoon outside. What is the plan for the next couple of hours?",
+            choices: [
+                { text: "Put on some comfortable shoes and go for a 15-minute walk.", bs: -40, energy: 10, next: 3 },
+                { text: "Settle into the favorite living room recliner and watch TV.", bs: 25, energy: -10, next: 3 }
+            ]
+        },
+        {
+            emoji: "🥩",
+            text: "Dinner time is approaching. What looks appetizing on the menu?",
+            choices: [
+                { text: "Baked chicken breast with roasted broccoli.", bs: -15, energy: 15, next: 4 },
+                { text: "A massive plate of pasta, garlic bread, and apple pie.", bs: 80, energy: -20, next: 4 }
+            ]
+        },
+        {
+            emoji: "🛏️",
+            text: "The sun has set and it is time to wrap up Day 1. How are we feeling before bed?",
+            choices: [
+                { text: "Check blood sugar one last time and head to sleep.", bs: -10, energy: 20, next: "check_health_boundary" }
+            ]
+        },
+        // Emergency/Symptom Intervention Cards
+        {
+            id: "symptom_spike",
+            emoji: "😵",
+            text: "Hold on, [NAME]... your mouth feels incredibly dry, your vision is getting blurry, and you feel entirely wiped out. Your blood sugar is climbing too high.",
+            choices: [
+                { text: "Drink a large glass of water, check your sugar, and rest.", bs: -50, energy: 20, next: "resume" },
+                { text: "Ignore it and drink a soda. 'It's probably just a passing bug.'", bs: 80, energy: -30, next: "emergency_911" }
+            ]
+        },
+        {
+            id: "emergency_911",
+            emoji: "🚑",
+            text: "EMERGENCY! [NAME]'s vision goes dark and dizziness takes over. An ambulance has to be called to carry you to the emergency room for an absolute medical correction.",
+            choices: [
+                { text: "Let the doctors treat you and promise to build a better routine.", bs: -120, energy: 50, next: "reset_game" }
+            ]
+        }
+    ];
+
+    function startGame() {
+        const nameInput = document.getElementById('player-name').value.trim();
+        if (nameInput) {
+            state.name = nameInput;
+        } else {
+            state.name = "Mom & Dad"; // Fallback default
+        }
+        
+        document.getElementById('welcome-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        
+        renderCard(0);
+    }
+
+    function renderCard(indexOrId) {
+        let card;
+        
+        if (typeof indexOrId === "string") {
+            card = cardDeck.find(c => c.id === indexOrId);
+        } else {
+            card = cardDeck[indexOrId];
+            state.currentDeckIndex = indexOrId;
+        }
+
+        if (!card) return;
+
+        // Dynamic Text Replacement
+        document.getElementById('card-emoji').innerText = card.emoji;
+        document.getElementById('card-text').innerText = card.text.replace(/\[NAME\]/g, state.name);
+
+        // Generate choice options
+        const container = document.getElementById('choices-container');
+        container.innerHTML = "";
+
+        card.choices.forEach(choice => {
+            const btn = document.createElement('button');
+            btn.className = "btn-option";
+            btn.innerText = choice.text;
+            btn.onclick = () => makeChoice(choice);
+            container.appendChild(btn);
+        });
+
+        updateHUD();
+    }
+
+    function makeChoice(choice) {
+        // Apply changes to health stats
+        state.bloodSugar += choice.bs;
+        state.energy += choice.energy;
+
+        // Cap values realistically
+        if (state.bloodSugar < 60) state.bloodSugar = 60;
+        if (state.energy > 100) state.energy = 100;
+        if (state.energy < 0) state.energy = 0;
+
+        // Dynamic A1C calculation tracking based on blood sugar trends
+        state.a1c = parseFloat((0.03 * state.bloodSugar + 3.2).toFixed(1));
+        if (state.a1c < 5.4) state.a1c = 5.4;
+
+        // Evaluate Next Destination
+        let target = choice.next;
+
+        if (target === "check_health_boundary") {
+            // End of normal day cycle: Evaluate results
+            if (state.bloodSugar >= 240) {
+                renderCard("symptom_spike");
+            } else {
+                // Advance day successfully
+                state.day += 1;
+                alert(`Great job, ${state.name}! You successfully finished Day 1 with stable routines. Let's restart the cycle and keep practicing.`);
+                resetToHealthyBaseline();
+            }
+        } else if (target === "resume") {
+            renderCard(2); // Send back to daytime routine
+        } else if (target === "reset_game") {
+            resetToHealthyBaseline();
+        } else {
+            // Check severe thresholds instantly mid-game
+            if (state.bloodSugar >= 290 && target !== "emergency_911") {
+                renderCard("emergency_911");
+            } else {
+                renderCard(target);
+            }
+        }
+    }
+
+    function resetToHealthyBaseline() {
+        state.bloodSugar = 130;
+        state.energy = 100;
+        state.a1c = 7.0;
+        renderCard(0);
+    }
+
+    function updateHUD() {
+        document.getElementById('hud-day').innerText = state.day;
+        const feelLabel = document.getElementById('hud-energy');
+        
+        if (state.bloodSugar > 220 || state.energy < 40) {
+            feelLabel.innerText = "Sluggish / Dizzy";
+            feelLabel.style.color = "var(--danger-color)";
+        } else if (state.bloodSugar > 160) {
+            feelLabel.innerText = "Tired / Thirsty";
+            feelLabel.style.color = "var(--warning-color)";
+        } else {
+            feelLabel.innerText = "Good Energy";
+            feelLabel.style.color = "var(--success-color)";
+        }
+    }
+
+    function toggleMedicalReport(show) {
+        const modal = document.getElementById('health-modal');
+        if (show) {
+            document.getElementById('report-greeting').innerText = `Current reading for ${state.name}:`;
+            document.getElementById('report-bs').innerText = state.bloodSugar;
+            document.getElementById('report-a1c').innerText = state.a1c + "%";
+
+            // Style and evaluate labels
+            const bsLabel = document.getElementById('report-bs-label');
+            const a1cLabel = document.getElementById('report-a1c-label');
+            const adviceText = document.getElementById('report-advice');
+
+            if (state.bloodSugar > 200) {
+                bsLabel.innerText = "Dangerously High";
+                bsLabel.style.color = "var(--danger-color)";
+                adviceText.innerText = "Your body is working overtime. Without medicine or lower carbohydrate choices, your vital organs are experiencing true strain.";
+            } else if (state.bloodSugar > 140) {
+                bsLabel.innerText = "Elevated";
+                bsLabel.style.color = "var(--warning-color)";
+                adviceText.innerText = "Slightly high numbers. Choosing a quick walk or drinking plain water will help pull this index down naturally.";
+            } else {
+                bsLabel.innerText = "Safe Zone";
+                bsLabel.style.color = "var(--success-color)";
+                adviceText.innerText = "Fantastic! Your heart, nerves, and kidneys thrive when your blood sugar readings sleep safely in this bracket.";
+            }
+
+            if (state.a1c >= 8.0) {
+                a1cLabel.innerText = "Action Needed";
+                a1cLabel.style.color = "var(--danger-color)";
+            } else if (state.a1c >= 6.5) {
+                a1cLabel.innerText = "Diabetic Range";
+                a1cLabel.style.color = "var(--warning-color)";
+            } else {
+                a1cLabel.innerText = "Great Control";
+                a1cLabel.style.color = "var(--success-color)";
+            }
+
+            modal.style.display = "flex";
+        } else {
+            modal.style.display = "none";
+        }
+    }
+</script>
+
+</body>
+</html>
